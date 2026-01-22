@@ -7,14 +7,11 @@ let page = 0;
 
 async function fetchAndDisplayPosts() {
   page++;
-  loader.classList.add("show");
   const response = await fetch(
     `https://jsonplaceholder.typicode.com/posts?_limit=${limit}&_page=${page}`,
   );
 
   const posts = await response.json();
-
-  loader.classList.remove("show");
 
   for (const post of posts) {
     const newPost = document.createElement("div");
@@ -34,27 +31,26 @@ function filterPosts(e) {
   for (const post of posts) {
     const title = post.querySelector(".post-title").textContent.toLowerCase();
     const body = post.querySelector(".post-body").textContent.toLowerCase();
-    if (!title.includes(queryTerm) || !body.includes(queryTerm)) {
-      post.style.display = "none";
-    } else {
+    if (title.includes(queryTerm) || body.includes(queryTerm)) {
       post.style.display = "flex";
+    } else {
+      post.style.display = "none";
     }
   }
 }
 
-const observer = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        fetchAndDisplayPosts();
-      }
-    });
-  },
-  { threshold: 1.0 },
-);
-const sentinel = document.querySelector("#footer-sentinel");
-observer.observe(sentinel);
+function infiniteScrollImplementer() {
+  const { scrollTop, clientHeight, scrollHeight } = document.documentElement;
+  if (scrollTop + clientHeight >= scrollHeight - 5) {
+    loader.classList.add("show");
+    setTimeout(() => {
+      loader.classList.remove("show");
+      fetchAndDisplayPosts();
+    }, 1000);
+  }
+}
 
 fetchAndDisplayPosts();
 
 filter.addEventListener("input", filterPosts);
+window.addEventListener("scrollend", infiniteScrollImplementer);
